@@ -1,13 +1,17 @@
-from main import db
-from sqlalchemy import Integer, String, Enum, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Integer, String, Enum, DateTime, Boolean
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from datetime import datetime
+
+class Base(DeclarativeBase):
+    pass
+
+db = SQLAlchemy(model_class=Base)
 
 class User(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
-    pin: Mapped[str] = mapped_column(String(4), nullable=False)
-    is_admin: Mapped[bool] = mapped_column(default=False)
+    pin: Mapped[str] = mapped_column(String(7), nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
 class Ticket(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -18,3 +22,8 @@ class Ticket(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     user_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('tickets', lazy=True))
+
+def init_db(app):
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()

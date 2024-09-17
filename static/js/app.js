@@ -1,16 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
     const createTicketForm = document.getElementById('create-ticket-form');
     const ticketList = document.getElementById('ticket-list');
     const clearTicketsBtn = document.getElementById('clear-tickets-btn');
 
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
-    }
-
-    if (registerForm) {
-        registerForm.addEventListener('submit', handleRegister);
     }
 
     if (createTicketForm) {
@@ -28,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleLogin(e) {
     e.preventDefault();
-    const username = document.getElementById('username').value;
     const pin = document.getElementById('pin').value;
 
     try {
@@ -37,43 +31,16 @@ async function handleLogin(e) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, pin }),
+            body: JSON.stringify({ pin }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
             localStorage.setItem('isAdmin', data.is_admin);
-            window.location.href = '/dashboard';
+            window.location.href = '/tickets';
         } else {
-            alert(data.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-async function handleRegister(e) {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const pin = document.getElementById('pin').value;
-
-    try {
-        const response = await fetch('/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, pin }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert(data.message);
-            window.location.href = '/login';
-        } else {
-            alert(data.message);
+            alert(data.error);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -87,7 +54,7 @@ async function handleCreateTicket(e) {
     const priority = document.getElementById('priority').value;
 
     try {
-        const response = await fetch('/create_ticket', {
+        const response = await fetch('/tickets', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -101,7 +68,7 @@ async function handleCreateTicket(e) {
             alert(data.message);
             fetchTickets();
         } else {
-            alert(data.message);
+            alert(data.error);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -111,15 +78,16 @@ async function handleCreateTicket(e) {
 async function fetchTickets() {
     try {
         const response = await fetch('/tickets');
-        const tickets = await response.json();
-
-        if (response.ok) {
-            displayTickets(tickets);
-        } else {
-            alert('Failed to fetch tickets');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const tickets = await response.json();
+        displayTickets(tickets);
     } catch (error) {
         console.error('Error:', error);
+        if (error.message.includes('401')) {
+            window.location.href = '/login';
+        }
     }
 }
 
@@ -136,7 +104,6 @@ function displayTickets(tickets) {
             <td>${ticket.priority}</td>
             <td>${ticket.status}</td>
             <td>${ticket.created_at}</td>
-            <td>${ticket.user}</td>
             <td><button onclick="closeTicket(${ticket.id})">Close</button></td>
         `;
         ticketList.appendChild(row);
@@ -146,7 +113,7 @@ function displayTickets(tickets) {
 async function closeTicket(ticketId) {
     try {
         const response = await fetch(`/close_ticket/${ticketId}`, {
-            method: 'PUT',
+            method: 'POST',
         });
 
         const data = await response.json();
@@ -155,7 +122,7 @@ async function closeTicket(ticketId) {
             alert(data.message);
             fetchTickets();
         } else {
-            alert(data.message);
+            alert(data.error);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -169,7 +136,7 @@ async function handleClearTickets() {
 
     try {
         const response = await fetch('/clear_tickets', {
-            method: 'DELETE',
+            method: 'POST',
         });
 
         const data = await response.json();
@@ -178,7 +145,7 @@ async function handleClearTickets() {
             alert(data.message);
             fetchTickets();
         } else {
-            alert(data.message);
+            alert(data.error);
         }
     } catch (error) {
         console.error('Error:', error);

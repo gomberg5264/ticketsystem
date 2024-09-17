@@ -1,47 +1,49 @@
-from flask import Blueprint, request, jsonify, session, render_template
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Blueprint, request, session, jsonify, redirect, url_for, render_template, current_app
 from models import User, db
+import logging
 
 auth = Blueprint('auth', __name__)
 
+ADMIN_PIN = "5264062"
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.json.get('username')
-        pin = request.json.get('pin')
-
-        user = User.query.filter_by(username=username).first()
-
-        if not user or not check_password_hash(user.pin, pin):
-            return jsonify({'message': 'Invalid credentials'}), 401
-
-        session['user_id'] = user.id
-        return jsonify({'message': 'Logged in successfully', 'is_admin': user.is_admin}), 200
+    current_app.logger.info("Login route accessed")
+    if request.method == 'GET':
+        current_app.logger.info("GET request to login page")
+        return render_template('login.html')
     
-    return render_template('login.html')
-
-@auth.route('/register', methods=['GET', 'POST'])
-def register():
     if request.method == 'POST':
-        username = request.json.get('username')
-        pin = request.json.get('pin')
-
-        if not username or not pin or len(pin) != 4:
-            return jsonify({'message': 'Invalid input'}), 400
-
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            return jsonify({'message': 'Username already exists'}), 400
-
-        new_user = User(username=username, pin=generate_password_hash(pin, method='sha256'))
-        db.session.add(new_user)
-        db.session.commit()
-
-        return jsonify({'message': 'User registered successfully'}), 201
-    
-    return render_template('register.html')
+        current_app.logger.info("POST request to login")
+        data = request.json
+        pin = data.get('pin')
+        current_app.logger.info(f"Received PIN: {pin}")
+        
+        if pin == ADMIN_PIN:
+            current_app.logger.info("Valid PIN entered")
+            user = User.query.filter_by(pin=pin).first()
+            if not user:
+                current_app.logger.info("Creating new admin user")
+                user = User(pin=pin, is_admin=True)
+                db.session.add(user)
+                db.session.commit()
+            
+            session['user_id'] = user.id
+            session['is_admin'] = user.is_admin
+            current_app.logger.info(f"User logged in: ID={user.id}, Is Admin={user.is_admin}")
+            return jsonify({'message': 'Logged in successfully', 'is_admin': user.is_admin}), 200
+        else:
+            current_app.logger.warning("Invalid PIN entered")
+            return jsonify({'error': 'Invalid PIN'}), 401
 
 @auth.route('/logout')
 def logout():
+    current_app.logger.info("Logout route accessed")
     session.pop('user_id', None)
-    return jsonify({'message': 'Logged out successfully'}), 200
+    session.pop('is_admin', None)
+    return redirect(url_for('auth.login'))
+
+@auth.route('/')
+def index():
+    current_app.logger.info("Index route accessed, redirecting to login")
+    return redirect(url_for('auth.login'))

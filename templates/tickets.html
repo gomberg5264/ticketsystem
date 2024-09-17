@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Tickets{% endblock %}
+
+{% block content %}
+<h2>Create New Ticket</h2>
+<form id="create-ticket-form">
+    <div class="form-group">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required>
+    </div>
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea>
+    </div>
+    <div class="form-group">
+        <label for="priority">Priority:</label>
+        <select id="priority" name="priority" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select>
+    </div>
+    <button type="submit" class="button">Create Ticket</button>
+</form>
+
+<h2>Tickets</h2>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody id="ticket-list">
+        {% for ticket in tickets %}
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.title }}</td>
+            <td>{{ ticket.description }}</td>
+            <td>{{ ticket.priority }}</td>
+            <td>{{ ticket.status }}</td>
+            <td>{{ ticket.created_at }}</td>
+            <td><button onclick="closeTicket({{ ticket.id }})">Close</button></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<button id="clear-tickets-btn" class="button" style="display: none;">Clear All Tickets</button>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const isAdmin = localStorage.getItem('isAdmin') === 'true';
+        const clearTicketsBtn = document.getElementById('clear-tickets-btn');
+        if (isAdmin) {
+            clearTicketsBtn.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}
