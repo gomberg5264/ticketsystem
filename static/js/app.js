@@ -85,33 +85,20 @@ async function fetchTickets() {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const tickets = await response.json();
-        displayTickets(tickets);
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newTicketList = doc.getElementById('ticket-list');
+        if (newTicketList) {
+            const ticketList = document.getElementById('ticket-list');
+            ticketList.innerHTML = newTicketList.innerHTML;
+        }
     } catch (error) {
         console.error('Error:', error);
         if (error.message.includes('401')) {
             window.location.href = '/login';
         }
     }
-}
-
-function displayTickets(tickets) {
-    const ticketList = document.getElementById('ticket-list');
-    ticketList.innerHTML = '';
-
-    tickets.forEach(ticket => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${ticket.id}</td>
-            <td>${ticket.title}</td>
-            <td>${ticket.description}</td>
-            <td>${ticket.priority}</td>
-            <td>${ticket.status}</td>
-            <td>${ticket.created_at}</td>
-            <td><button onclick="closeTicket(${ticket.id})">Close</button></td>
-        `;
-        ticketList.appendChild(row);
-    });
 }
 
 async function closeTicket(ticketId) {
