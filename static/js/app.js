@@ -66,7 +66,11 @@ async function handleCreateTicket(e) {
 
         if (response.ok) {
             alert(data.message);
-            fetchTickets();
+            fetchTickets(); // Automatically refresh the ticket list
+            // Clear the form fields after successful ticket creation
+            document.getElementById('title').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('priority').value = 'Low';
         } else {
             alert(data.error);
         }
