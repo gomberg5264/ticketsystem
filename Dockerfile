@@ -1,25 +1,38 @@
-# Use nixos image with Python 3.11
-FROM nixos/nix
+# Base stage for Node.js
+FROM node:18-alpine AS node_builder
 
-# Set Nix channel to a valid stable version (let's use nixpkgs-unstable or nixpkgs-23.05 for example)
-RUN nix-channel --add https://nixos.org/channels/nixpkgs-23.05 nixpkgs && \
-    nix-channel --update
+# Set the working directory for Node.js
+WORKDIR /usr/src/app
 
-# Install Python 3.11
-RUN nix-env -iA nixpkgs.python311
+# Copy package.json and package-lock.json for Node.js dependencies
+COPY package*.json ./
 
-# Copy application code to the container
-WORKDIR /app
-COPY . /app
+# Install Node.js dependencies
+RUN npm install --production
 
-# Install any additional Python dependencies (if you have a requirements.txt file)
-# Uncomment the following lines if you need to install dependencies:
-# COPY requirements.txt /app/requirements.txt
-# RUN python3.11 -m pip install -r requirements.txt
+# Copy all files into the image for the Node.js app
+COPY . .
 
-# Expose the local and external ports
-EXPOSE 5000
-EXPOSE 80
+# Build the Node.js app if necessary (uncomment if needed)
+# RUN npm run build
 
-# Command to run the Flask app on port 5000
-CMD ["python3.11", "app.py"]
+# Base stage for Python
+FROM python:3.11-slim AS python_builder
+
+# Set the working directory for Python
+WORKDIR /usr/src/app
+
+# Copy Python-related files (requirements.txt or similar)
+COPY requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the application code
+COPY . .
+
+# Expose the port for the app (adjust if necessary)
+EXPOSE 3000
+
+# Command to run both the Node.js and Python applications (adjust accordingly)
+CMD [ "sh", "-c", "npm start & python app.py" ]
