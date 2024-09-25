@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  node-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - python-app
+    volumes:
+      - .:/usr/src/app
+    command: npm start
+
+  python-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/usr/src/app
+    command: python app.py
