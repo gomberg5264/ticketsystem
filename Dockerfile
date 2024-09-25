@@ -1,8 +1,8 @@
 # Use nixos image with Python 3.11
 FROM nixos/nix
 
-# Set Nix channel to stable-24_05
-RUN nix-channel --add https://nixos.org/channels/nixpkgs-24.05 nixpkgs && \
+# Set Nix channel to a valid stable version (let's use nixpkgs-unstable or nixpkgs-23.05 for example)
+RUN nix-channel --add https://nixos.org/channels/nixpkgs-23.05 nixpkgs && \
     nix-channel --update
 
 # Install Python 3.11
