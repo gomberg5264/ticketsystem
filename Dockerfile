@@ -1,38 +1,20 @@
-# Base stage for Node.js
-FROM node:18-alpine AS node_builder
+# Use an official Python runtime as a base image
+FROM python:3.9-slim
 
-# Set the working directory for Node.js
-WORKDIR /usr/src/app
+# Set the working directory
+WORKDIR /app
 
-# Copy package.json and package-lock.json for Node.js dependencies
-COPY package*.json ./
+# Copy the current directory contents into the container
+COPY . /app
 
-# Install Node.js dependencies
-RUN npm install --production
-
-# Copy all files into the image for the Node.js app
-COPY . .
-
-# Build the Node.js app if necessary (uncomment if needed)
-# RUN npm run build
-
-# Base stage for Python
-FROM python:3.11-slim AS python_builder
-
-# Set the working directory for Python
-WORKDIR /usr/src/app
-
-# Copy Python-related files (requirements.txt or similar)
-COPY requirements.txt ./
-
-# Install Python dependencies
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
-COPY . .
+# Make port 5000 available to the world outside this container
+EXPOSE 5000
 
-# Expose the port for the app (adjust if necessary)
-EXPOSE 3000
+# Define environment variable
+ENV FLASK_APP=app.py
 
-# Command to run both the Node.js and Python applications (adjust accordingly)
-CMD [ "sh", "-c", "npm start & python app.py" ]
+# Run the Flask app
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
